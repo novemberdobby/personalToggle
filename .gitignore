@@ -1,0 +1,10 @@
+
+build/
+
+personalToggle-agent/target/
+
+personalToggle-common/target/
+
+personalToggle-server/target/
+
+target/
