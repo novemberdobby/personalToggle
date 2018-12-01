@@ -44,8 +44,6 @@
   </build>
   <modules>
     <module>personalToggle-server</module>
-    <module>personalToggle-agent</module>
-    <module>personalToggle-common</module>
     <module>build</module>
   </modules>
 </project>
