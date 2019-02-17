@@ -8,3 +8,11 @@ personalToggle-common/target/
 personalToggle-server/target/
 
 target/
+personalToggle-server/.classpath
+personalToggle-server/.settings/org.eclipse.jdt.apt.core.prefs
+.settings/org.eclipse.m2e.core.prefs
+.vscode/settings.json
+personalToggle-server/.project
+personalToggle-server/.settings/org.eclipse.jdt.core.prefs
+personalToggle-server/.settings/org.eclipse.m2e.core.prefs
+.project

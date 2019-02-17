@@ -1,6 +1,7 @@
 package novemberdobby.teamcity.personalToggle;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,28 +23,39 @@ import org.jetbrains.annotations.NotNull;
 public class ToggleTab extends SimpleCustomTab {
 
     private SBuildServer m_server;
+    private ToggleStatus m_status;
     
     public ToggleTab(@NotNull final PagePlaces places,
                         @NotNull final PluginDescriptor descriptor,
-                        @NotNull final SBuildServer server) {
-        super(places, PlaceId.AGENTS_TAB, descriptor.getPluginName(), "toggle_list.jsp", "Personal Builds"); //TODO show count enabled
+                        @NotNull final SBuildServer server,
+                        @NotNull final ToggleStatus status) {
+        super(places, PlaceId.AGENTS_TAB, descriptor.getPluginName(), "toggle_list.jsp", "Personal Builds"); //TODO show enabled count
         m_server = server;
+        m_status = status;
         register();
     }
-
+    
     @Override
     public boolean isAvailable(@NotNull HttpServletRequest request) {
         SUser user = SessionUser.getUser(request);
         //we could check what each agent can run, then check if the user has <manage agent> perms for that project, but eh
         return user != null && user.isPermissionGrantedGlobally(Permission.ADMINISTER_AGENT);
     }
-
+    
     @Override
     public void fillModel(@NotNull Map<String, Object> model, @NotNull HttpServletRequest request) {
         
-        List<SBuildAgent> agents = new ArrayList<SBuildAgent>(m_server.getBuildAgentManager().getRegisteredAgents());
-        agents.addAll(m_server.getBuildAgentManager().getUnregisteredAgents());
+        //show which are enabled
+        Map<SBuildAgent, Boolean> agentsStatus = new HashMap<SBuildAgent, Boolean>();
+
+        List<SBuildAgent> allAgents = new ArrayList<SBuildAgent>(m_server.getBuildAgentManager().getRegisteredAgents());
+        allAgents.addAll(m_server.getBuildAgentManager().getUnregisteredAgents());
+
+        for(SBuildAgent agent : allAgents) {
+            boolean enabled = m_status.getIsEnabled(agent.getId());
+            agentsStatus.put(agent, enabled);
+        }
         
-        model.put("agents", agents);
+        model.put("agents", agentsStatus);
     }
 }
