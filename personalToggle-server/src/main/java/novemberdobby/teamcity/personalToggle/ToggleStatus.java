@@ -80,6 +80,8 @@ public class ToggleStatus extends BaseController {
             m_lock.unlock();
         }
     }
+
+    //TODO: only allow personal builds/don't allow personal builds/default
     
     //TODO hook serverstartup, should probably cull unknown ids too
     public void load() {
