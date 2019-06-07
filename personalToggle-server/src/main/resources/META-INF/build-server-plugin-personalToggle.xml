@@ -5,5 +5,5 @@
        default-autowire="constructor">
   <bean class="novemberdobby.teamcity.personalToggle.ToggleTab"/>
   <bean class="novemberdobby.teamcity.personalToggle.ToggleStatus"/>
-  <bean class="novemberdobby.teamcity.personalToggle.AgentLimiter"/>
+  <bean class="novemberdobby.teamcity.personalToggle.AgentsFilter"/>
 </beans>
