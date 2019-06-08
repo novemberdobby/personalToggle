@@ -3,6 +3,7 @@ package novemberdobby.teamcity.personalToggle;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import jetbrains.buildServer.serverSide.SBuildAgent;
 import jetbrains.buildServer.serverSide.SBuildServer;
@@ -14,10 +15,10 @@ import jetbrains.buildServer.serverSide.buildDistribution.WaitReason;
 
 public class AgentsFilter implements StartingBuildAgentsFilter {
 
-    ToggleStatus m_controller;
+    ToggleController m_controller;
     SBuildServer m_server;
 
-    public AgentsFilter(ToggleStatus agentsStatus, SBuildServer server) {
+    public AgentsFilter(ToggleController agentsStatus, SBuildServer server) {
         m_controller = agentsStatus;
         m_server = server;
     }
@@ -31,9 +32,14 @@ public class AgentsFilter implements StartingBuildAgentsFilter {
 
         Collection<SBuildAgent> defaultAgents = context.getAgentsForStartingBuild();
         List<SBuildAgent> possibleAgents = new ArrayList<SBuildAgent>(defaultAgents.size());
+        Map<Integer, ToggleSetting> settings = m_controller.getSettings();
 
         for (SBuildAgent agent : defaultAgents) {
-            if(!isPersonal || m_controller.getIsEnabled(agent.getId())) {
+            ToggleSetting setting = settings.getOrDefault(agent.getId(), ToggleSetting.Default);
+
+            if(setting == ToggleSetting.Default
+            || (isPersonal && setting != ToggleSetting.Never)
+            || (!isPersonal && setting != ToggleSetting.Only)) {
                 possibleAgents.add(agent);
             }
         }

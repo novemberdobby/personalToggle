@@ -3,8 +3,8 @@
   <info>
     <name>personalToggle</name>
     <display-name>Personal Build Toggle</display-name>
-    <version>0.1</version>
-    <description>Prevent personal builds from running on certain agents</description>
+    <version>0.2</version>
+    <description>Specify agents to never or exclusively run personal builds</description>
     <download-url>-</download-url>
     <email>novemberdobby@gmail.com</email>
     <vendor>

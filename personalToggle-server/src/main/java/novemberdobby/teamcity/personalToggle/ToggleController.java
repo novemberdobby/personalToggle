@@ -1,7 +1,8 @@
 package novemberdobby.teamcity.personalToggle;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.log.Loggers;
@@ -19,13 +20,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.servlet.ModelAndView;
 import org.jetbrains.annotations.NotNull;
 
-public class ToggleStatus extends BaseController {
+public class ToggleController extends BaseController {
     
     private SBuildServer m_server;
-    private Set<Integer> m_disabled = new HashSet<Integer>();
+    private Map<Integer, ToggleSetting> m_agents = new HashMap<Integer, ToggleSetting>();
     private ReentrantLock m_lock = new ReentrantLock();
     
-    public ToggleStatus(@NotNull final SBuildServer server, @NotNull final WebControllerManager webManager) {
+    public ToggleController(@NotNull final SBuildServer server, @NotNull final WebControllerManager webManager) {
         m_server = server;
         webManager.registerController(Constants.TOGGLE_URL, this);
     }
@@ -45,22 +46,25 @@ public class ToggleStatus extends BaseController {
                 return null;
             }
             
-            boolean enabled = "true".equals(request.getParameter("enabled"));
-            
+            String setting = request.getParameter("setting");            
+
             BuildAgentManager bam = m_server.getBuildAgentManager();
             SBuildAgent agent = bam.findAgentById(id, true);
             if(agent != null) {
                 m_lock.lock();
                 
                 try {
-                    if(enabled) {
-                        m_disabled.remove(id);
+                    if("default".equals(setting)) {
+                        m_agents.remove(id);
                     } else {
-                        m_disabled.add(id);
+                        m_agents.put(id, ToggleSetting.valueOf(setting));
                     }
     
-                    Loggers.SERVER.info(String.format("User %s %s agent '%s' for personal builds", user.getUsername(), enabled ? "enabled" : "disabled", agent.getName()));
+                    Loggers.SERVER.info(String.format("User %s set agent '%s' to '%s' for personal builds", user.getUsername(), agent.getName(), setting));
                     save();
+                }
+                catch(IllegalArgumentException ex) {
+                    logger.info("Bad setting value for personal builds toggle: " + setting);
                 }
                 finally {
                     m_lock.unlock();
@@ -71,18 +75,17 @@ public class ToggleStatus extends BaseController {
         return null;
     }
 
-    public boolean getIsEnabled(int agentId) {
+    public Map<Integer, ToggleSetting> getSettings() {
         m_lock.lock();
+        
         try {
-            return !m_disabled.contains(agentId);
+            return new HashMap<Integer, ToggleSetting>(m_agents);
         }
         finally {
             m_lock.unlock();
         }
     }
 
-    //TODO: only allow personal builds/don't allow personal builds/default
-    
     //TODO hook serverstartup, should probably cull unknown ids too
     public void load() {
         

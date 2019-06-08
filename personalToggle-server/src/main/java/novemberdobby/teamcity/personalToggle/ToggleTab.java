@@ -23,12 +23,12 @@ import org.jetbrains.annotations.NotNull;
 public class ToggleTab extends SimpleCustomTab {
 
     private SBuildServer m_server;
-    private ToggleStatus m_status;
+    private ToggleController m_status;
     
     public ToggleTab(@NotNull final PagePlaces places,
                         @NotNull final PluginDescriptor descriptor,
                         @NotNull final SBuildServer server,
-                        @NotNull final ToggleStatus status) {
+                        @NotNull final ToggleController status) {
         super(places, PlaceId.AGENTS_TAB, descriptor.getPluginName(), "toggle_list.jsp", "Personal Builds"); //TODO show enabled count
         m_server = server;
         m_status = status;
@@ -46,14 +46,14 @@ public class ToggleTab extends SimpleCustomTab {
     public void fillModel(@NotNull Map<String, Object> model, @NotNull HttpServletRequest request) {
         
         //show which are enabled
-        Map<SBuildAgent, Boolean> agentsStatus = new HashMap<SBuildAgent, Boolean>();
+        Map<SBuildAgent, String> agentsStatus = new HashMap<SBuildAgent, String>();
 
         List<SBuildAgent> allAgents = new ArrayList<SBuildAgent>(m_server.getBuildAgentManager().getRegisteredAgents());
         allAgents.addAll(m_server.getBuildAgentManager().getUnregisteredAgents());
+        Map<Integer, ToggleSetting> settings = m_status.getSettings();
 
         for(SBuildAgent agent : allAgents) {
-            boolean enabled = m_status.getIsEnabled(agent.getId());
-            agentsStatus.put(agent, enabled);
+            agentsStatus.put(agent, settings.getOrDefault(agent.getId(), ToggleSetting.Default).toString());
         }
         
         model.put("agents", agentsStatus);

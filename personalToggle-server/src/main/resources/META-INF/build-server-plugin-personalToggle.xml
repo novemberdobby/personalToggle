@@ -4,6 +4,6 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd"
        default-autowire="constructor">
   <bean class="novemberdobby.teamcity.personalToggle.ToggleTab"/>
-  <bean class="novemberdobby.teamcity.personalToggle.ToggleStatus"/>
+  <bean class="novemberdobby.teamcity.personalToggle.ToggleController"/>
   <bean class="novemberdobby.teamcity.personalToggle.AgentsFilter"/>
 </beans>
