@@ -1,7 +1,7 @@
 package novemberdobby.teamcity.personalToggle;
 
 public enum ToggleSetting {
-    Default("Default (can run personal and non-personal builds)"),
+    Unset("-"),
     Only("Only runs personal builds"),
     Never("Never runs personal builds");
 

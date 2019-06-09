@@ -23,21 +23,41 @@ public class AgentsFilter implements StartingBuildAgentsFilter {
         m_server = server;
     }
 
+    //TODO: disable button
     @Override
     public AgentsFilterResult filterAgents(AgentsFilterContext context) {
 
         String buildId = context.getStartingBuild().getItemId();
         SQueuedBuild build = m_server.getQueue().findQueued(buildId);
+
+        //sometimes this can be undefined, race condition possibly?
+        if(build == null) {
+            AgentsFilterResult empty = new AgentsFilterResult();
+            empty.setWaitReason(new WaitReason() {
+                @Override
+                public String getDescription() {
+                    return "Unknown build";
+                }
+            });
+            return empty;
+        }
+
         boolean isPersonal = build.isPersonal();
 
         Collection<SBuildAgent> defaultAgents = context.getAgentsForStartingBuild();
         List<SBuildAgent> possibleAgents = new ArrayList<SBuildAgent>(defaultAgents.size());
-        Map<Integer, ToggleSetting> settings = m_controller.getSettings();
+        Map<Integer, ToggleSetting> agentSettings = m_controller.getAgentSettings();
+        Map<Integer, ToggleSetting> poolSettings = m_controller.getPoolSettings();
 
         for (SBuildAgent agent : defaultAgents) {
-            ToggleSetting setting = settings.getOrDefault(agent.getId(), ToggleSetting.Default);
+            ToggleSetting setting = agentSettings.getOrDefault(agent.getId(), ToggleSetting.Unset);
 
-            if(setting == ToggleSetting.Default
+            //fall back to pool setting
+            if(setting == ToggleSetting.Unset) {
+                setting = poolSettings.getOrDefault(agent.getAgentPool().getAgentPoolId(), ToggleSetting.Unset);
+            }
+
+            if(setting == ToggleSetting.Unset
             || (isPersonal && setting != ToggleSetting.Never)
             || (!isPersonal && setting != ToggleSetting.Only)) {
                 possibleAgents.add(agent);
