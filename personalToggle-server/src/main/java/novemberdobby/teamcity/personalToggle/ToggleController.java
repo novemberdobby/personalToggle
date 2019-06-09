@@ -1,12 +1,22 @@
 package novemberdobby.teamcity.personalToggle;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.locks.ReentrantLock;
 import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.auth.Permission;
+import jetbrains.buildServer.serverSide.BuildAgentManager;
 import jetbrains.buildServer.serverSide.SBuildServer;
+import jetbrains.buildServer.serverSide.ServerPaths;
 import jetbrains.buildServer.serverSide.agentPools.AgentPoolManager; //closed API
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.users.User;
@@ -16,6 +26,9 @@ import jetbrains.buildServer.web.util.SessionUser;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import org.springframework.web.servlet.ModelAndView;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,15 +36,21 @@ public class ToggleController extends BaseController {
     
     private SBuildServer m_server;
     private AgentPoolManager m_poolManager;
+    private ServerPaths m_serverPaths;
+
     private ReentrantLock m_lock = new ReentrantLock();
 
     private Map<Integer, ToggleSetting> m_agents = new HashMap<Integer, ToggleSetting>();
     private Map<Integer, ToggleSetting> m_pools = new HashMap<Integer, ToggleSetting>();
     private Boolean m_disabled = false;
 
-    public ToggleController(@NotNull final SBuildServer server, @NotNull final WebControllerManager webManager, @NotNull AgentPoolManager poolManager) {
+    public ToggleController(@NotNull final SBuildServer server,
+            @NotNull final WebControllerManager webManager,
+            @NotNull final AgentPoolManager poolManager,
+            @NotNull final ServerPaths serverPaths) {
         m_server = server;
         m_poolManager = poolManager;
+        m_serverPaths = serverPaths;
         webManager.registerController(Constants.TOGGLE_URL, this);
     }
     
@@ -125,17 +144,82 @@ public class ToggleController extends BaseController {
         }
     }
     
-    //TODO hook serverstartup, should probably cull unknown ids too
     public void load() {
-        
+        m_lock.lock();
+
+        SaveData data = null;        
+        try {
+            Reader reader = new InputStreamReader(new FileInputStream(getSavePath()) , "UTF-8");
+            Gson gson = new GsonBuilder().create();
+            data = gson.fromJson(reader, SaveData.class);
+            reader.close();
+        }
+        catch(Exception ex) {
+            Loggers.SERVER.error("Failed to save personal builds toggle data: " + ex.toString());
+        }
+        finally {
+            if(data != null) {
+                m_disabled = data.Disabled;
+
+                //cull any old IDs that don't exist any more
+                m_agents.clear();
+                BuildAgentManager bma = m_server.getBuildAgentManager();
+                for (Entry<Integer, ToggleSetting> a : data.Agents.entrySet()) {
+                    if(bma.findAgentById(a.getKey(), true) != null) {
+                        m_agents.put(a.getKey(), a.getValue());
+                    } else {
+                        Loggers.SERVER.info("Personal build toggle: unknown agent id " + a.getKey());
+                    }
+                }
+
+                m_pools.clear();
+                for (Entry<Integer, ToggleSetting> a : data.Pools.entrySet()) {
+                    if(m_poolManager.findAgentPoolById(a.getKey()) != null) {
+                        m_pools.put(a.getKey(), a.getValue());
+                    } else {
+                        Loggers.SERVER.info("Personal build toggle: unknown pool id " + a.getKey());
+                    }
+                }
+            }
+
+            m_lock.unlock();
+        }
     }
     
-    //TODO
     public void save() {
-        //m_disabled
+        m_lock.lock();
+
+        SaveData data = new SaveData();
+        data.Disabled = m_disabled;
+        data.Agents = m_agents;
+        data.Pools = m_pools;
+        
+        try {
+            Writer writer = new OutputStreamWriter(new FileOutputStream(getSavePath()) , "UTF-8");
+            Gson gson = new GsonBuilder().create();
+            gson.toJson(data, writer);
+            writer.close();
+        }
+        catch(Exception ex) {
+            Loggers.SERVER.error("Failed to save personal builds toggle data: " + ex.toString());
+        }
+        finally {
+            m_lock.unlock();
+        }
+    }
+
+    private String getSavePath() {
+        return Paths.get(m_serverPaths.getConfigDir(), "personal_builds_toggle.json").toString();
     }
     
 	public boolean isDisabled() {
         return m_disabled;
-	}
+    }
+    
+    private class SaveData {
+        
+        public Boolean Disabled;
+        public Map<Integer, ToggleSetting> Agents;
+        public Map<Integer, ToggleSetting> Pools;
+     }
 }

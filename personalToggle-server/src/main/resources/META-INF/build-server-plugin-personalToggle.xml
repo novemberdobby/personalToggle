@@ -6,4 +6,5 @@
   <bean class="novemberdobby.teamcity.personalToggle.ToggleTab"/>
   <bean class="novemberdobby.teamcity.personalToggle.ToggleController"/>
   <bean class="novemberdobby.teamcity.personalToggle.AgentsFilter"/>
+  <bean class="novemberdobby.teamcity.personalToggle.ServerListener"/>
 </beans>
