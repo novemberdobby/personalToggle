@@ -19,6 +19,8 @@ import jetbrains.buildServer.web.util.SessionUser;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.intellij.openapi.util.Pair;
+
 import org.jetbrains.annotations.NotNull;
 
 public class ToggleTab extends SimpleCustomTab {
@@ -26,16 +28,19 @@ public class ToggleTab extends SimpleCustomTab {
     private SBuildServer m_server;
     private AgentPoolManager m_poolManager;
     private ToggleController m_status;
+    private AgentsFilter m_filter;
     
     public ToggleTab(@NotNull final PagePlaces places,
                         @NotNull final PluginDescriptor descriptor,
                         @NotNull final SBuildServer server,
                         @NotNull final ToggleController status,
+                        @NotNull final AgentsFilter filter,
                         @NotNull final AgentPoolManager poolManager) {
-        super(places, PlaceId.AGENTS_TAB, descriptor.getPluginName(), "toggle_list.jsp", "Personal Builds"); //TODO show enabled count
+        super(places, PlaceId.AGENTS_TAB, descriptor.getPluginName(), "toggle_list.jsp", "Personal Builds");
         m_server = server;
-        m_poolManager = poolManager;
         m_status = status;
+        m_filter = filter;
+        m_poolManager = poolManager;
         register();
     }
     
@@ -66,8 +71,12 @@ public class ToggleTab extends SimpleCustomTab {
         for(AgentPool pool : allPools) {
             poolsStatus.put(pool, poolSettings.getOrDefault(pool.getAgentPoolId(), ToggleSetting.Unset).toString());
         }
+
+        Pair<Integer, Integer> canRun = m_filter.getCanRunCounts();
         
         model.put("agents", agentsStatus);
         model.put("pools", poolsStatus);
+        model.put("canRunPersonal", canRun.first);
+        model.put("canRunNonPersonal", canRun.second);
     }
 }

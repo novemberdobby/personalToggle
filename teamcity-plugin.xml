@@ -3,7 +3,7 @@
   <info>
     <name>personalToggle</name>
     <display-name>Personal Build Toggle</display-name>
-    <version>0.2</version>
+    <version>0.3</version>
     <description>Specify agents to never or exclusively run personal builds</description>
     <download-url>-</download-url>
     <email>novemberdobby@gmail.com</email>

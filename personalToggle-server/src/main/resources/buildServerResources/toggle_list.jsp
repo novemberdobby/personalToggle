@@ -16,6 +16,10 @@
 </style>
 
 <br>
+<div>From currently connected and enabled agents:</div>
+<li style="<c:if test='${canRunPersonal == 0}'>color:red</c:if>">${canRunPersonal} can run personal builds</li>
+<li style="<c:if test='${canRunNonPersonal == 0}'>color:red</c:if>">${canRunNonPersonal} can run non-personal builds</li>
+<br>
 <div><i>Agents without a setting below will fall back to their pool's behaviour. Settings take effect immediately.</i></div>
 <br>
 

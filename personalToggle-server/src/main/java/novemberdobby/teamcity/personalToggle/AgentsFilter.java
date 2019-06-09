@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.intellij.openapi.util.Pair;
+
 import jetbrains.buildServer.serverSide.SBuildAgent;
 import jetbrains.buildServer.serverSide.SBuildServer;
 import jetbrains.buildServer.serverSide.SQueuedBuild;
@@ -79,4 +81,45 @@ public class AgentsFilter implements StartingBuildAgentsFilter {
         return result;
     }
 
+    /**
+     * Return a pair with the count of personal & non-personal build runners respectively
+     */
+    public Pair<Integer, Integer> getCanRunCounts() {
+
+        Map<Integer, ToggleSetting> agentSettings = m_controller.getAgentSettings();
+        Map<Integer, ToggleSetting> poolSettings = m_controller.getPoolSettings();
+
+        List<SBuildAgent> agents = m_server.getBuildAgentManager().getRegisteredAgents();
+
+        Integer personal = 0;
+        Integer nonPersonal = 0;
+
+        for (SBuildAgent agent : agents) {
+            if(!agent.isEnabled()) {
+                continue;
+            }
+            
+            ToggleSetting ts = agentSettings.getOrDefault(agent.getId(), ToggleSetting.Unset);
+            if(ts == ToggleSetting.Unset) {
+                ts = poolSettings.getOrDefault(agent.getAgentPoolId(), ToggleSetting.Unset);
+            }
+
+            switch(ts) {
+                case Unset:
+                    personal++;
+                    nonPersonal++;
+                    break;
+                    
+                case Only:
+                    personal++;
+                    break;
+                
+                case Never:
+                    nonPersonal++;
+                    break;
+            }
+        }
+
+        return Pair.create(personal, nonPersonal);
+    }
 }
