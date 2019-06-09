@@ -27,7 +27,8 @@ public class ToggleController extends BaseController {
 
     private Map<Integer, ToggleSetting> m_agents = new HashMap<Integer, ToggleSetting>();
     private Map<Integer, ToggleSetting> m_pools = new HashMap<Integer, ToggleSetting>();
-    
+    private Boolean m_disabled = false;
+
     public ToggleController(@NotNull final SBuildServer server, @NotNull final WebControllerManager webManager, @NotNull AgentPoolManager poolManager) {
         m_server = server;
         m_poolManager = poolManager;
@@ -38,7 +39,17 @@ public class ToggleController extends BaseController {
     protected ModelAndView doHandle(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response) throws Exception {
         
         SUser user = SessionUser.getUser(request);
-        if(user.isPermissionGrantedGlobally(Permission.ADMINISTER_AGENT)) {
+
+        String toggle = request.getParameter("enabled");
+        if(toggle != null && user.isSystemAdministratorRoleGranted()) {
+            boolean disable = toggle.equals("false");
+            if(m_disabled != disable) {
+                m_disabled = disable;
+                Loggers.SERVER.info(String.format("User %s %s personal builds filter", user.getUsername(), m_disabled ? "disabled" : "enabled"));
+                save();
+            }
+
+        } else if(user.isPermissionGrantedGlobally(Permission.ADMINISTER_AGENT)) {
             
             int id = -1;
             try {
@@ -113,7 +124,7 @@ public class ToggleController extends BaseController {
             m_lock.unlock();
         }
     }
-
+    
     //TODO hook serverstartup, should probably cull unknown ids too
     public void load() {
         
@@ -121,6 +132,10 @@ public class ToggleController extends BaseController {
     
     //TODO
     public void save() {
-        
+        //m_disabled
     }
+    
+	public boolean isDisabled() {
+        return m_disabled;
+	}
 }

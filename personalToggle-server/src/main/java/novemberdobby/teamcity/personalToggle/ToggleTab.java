@@ -78,5 +78,6 @@ public class ToggleTab extends SimpleCustomTab {
         model.put("pools", poolsStatus);
         model.put("canRunPersonal", canRun.first);
         model.put("canRunNonPersonal", canRun.second);
+        model.put("enabled", !m_status.isDisabled());
     }
 }

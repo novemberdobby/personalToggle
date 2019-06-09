@@ -25,9 +25,14 @@ public class AgentsFilter implements StartingBuildAgentsFilter {
         m_server = server;
     }
 
-    //TODO: disable button
     @Override
     public AgentsFilterResult filterAgents(AgentsFilterContext context) {
+
+        if(m_controller.isDisabled()) {
+            AgentsFilterResult any = new AgentsFilterResult();
+            any.setFilteredConnectedAgents(new ArrayList<SBuildAgent>(context.getAgentsForStartingBuild()));
+            return any;
+        }
 
         String buildId = context.getStartingBuild().getItemId();
         SQueuedBuild build = m_server.getQueue().findQueued(buildId);
@@ -99,9 +104,15 @@ public class AgentsFilter implements StartingBuildAgentsFilter {
                 continue;
             }
             
-            ToggleSetting ts = agentSettings.getOrDefault(agent.getId(), ToggleSetting.Unset);
-            if(ts == ToggleSetting.Unset) {
-                ts = poolSettings.getOrDefault(agent.getAgentPoolId(), ToggleSetting.Unset);
+            ToggleSetting ts;
+            
+            if(m_controller.isDisabled()) {
+                ts = ToggleSetting.Unset;
+            } else {
+                ts = agentSettings.getOrDefault(agent.getId(), ToggleSetting.Unset);
+                if(ts == ToggleSetting.Unset) {
+                    ts = poolSettings.getOrDefault(agent.getAgentPoolId(), ToggleSetting.Unset);
+                }
             }
 
             switch(ts) {

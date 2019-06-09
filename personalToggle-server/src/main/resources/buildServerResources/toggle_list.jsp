@@ -1,5 +1,6 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="bs" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="forms" tagdir="/WEB-INF/tags/forms" %>
 
 <%@ page import="novemberdobby.teamcity.personalToggle.Constants" %>
 <%@ page import="novemberdobby.teamcity.personalToggle.ToggleSetting"%>
@@ -19,6 +20,9 @@
 <div>From currently connected and enabled agents:</div>
 <li style="<c:if test='${canRunPersonal == 0}'>color:red</c:if>">${canRunPersonal} can run personal builds</li>
 <li style="<c:if test='${canRunNonPersonal == 0}'>color:red</c:if>">${canRunNonPersonal} can run non-personal builds</li>
+<br>
+<forms:button id="toggleButton" onclick="BS.PersonalToggle.toggleEnabled()" className="btn">${enabled ? "Disable filter" : "Enable filter"}</forms:button>
+<br>
 <br>
 <div><i>Agents without a setting below will fall back to their pool's behaviour. Settings take effect immediately.</i></div>
 <br>
@@ -89,6 +93,15 @@
       BS.ajaxRequest(window['base_uri'] + '${toggle_url}', {
         method: "POST",
         parameters: { 'isPool': isPool, 'id': id, 'setting': dropdown.value }
+      });
+
+      location.reload();
+    },
+
+    toggleEnabled: function() {
+      BS.ajaxRequest(window['base_uri'] + '${toggle_url}', {
+        method: "POST",
+        parameters: { 'enabled': !${enabled} }
       });
 
       location.reload();
